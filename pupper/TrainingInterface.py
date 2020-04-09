@@ -67,7 +67,7 @@ class TrainingInterface:
             self.average_error = self.average_error_decay * self.average_error + (1.0 - self.average_error_decay) * error
 
             # Update agent
-            self.h.step(self.cs, [ angle_SDR ], True, 1.0)
+            self.h.step(self.cs, [ angle_SDR ], True, 1.0) # Constant reward of 1 encourages prediction of angles
         else:
             pass # TODO: Implement?
 
@@ -75,9 +75,15 @@ class TrainingInterface:
 
         self.num_samples += 1
 
-        if self.num_samples % 100 == 0:
-            print("Sample " + str(self.num_samples) + ", error: " + str(self.average_error))
-    
-    def save(self, fileName):
-        self.h.save(fileName)
+        # Give updates on training
+        if self.num_samples % 1000 == 0:
+            print("Sample " + str(self.num_samples) + ", average error: " + str(self.average_error))
+
+        # Save every now and then
+        if self.num_samples % 10000 == 0:
+            print("Saving...")
+
+            self.h.save("pupper.ohr")
+
+            print("Saved.")
         

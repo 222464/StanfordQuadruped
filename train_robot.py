@@ -35,7 +35,7 @@ def main(use_imu=False):
         # Parse the udp joystick commands and then update the robot controller's parameters
         command = Command()
 
-        # Go forward
+        # Go forward at max speed
         command.horizontal_velocity = np.array([1.0, 0])
 
         quat_orientation = (
