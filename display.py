@@ -33,8 +33,8 @@ class PupperDisplay(ShowBase):
 
         self.title = OnscreenText(text="Pupper Display",
                                   parent=base.a2dBottomCenter,
-                                  fg=(1, 1, 1, 1), shadow=(0, 0, 0, .5),
-                                  pos=(0, .1), scale=.1)
+                                  fg=(1, 1, 1, 1), shadow=(0, 0, 0, 0.5),
+                                  pos=(0, 0.1), scale=0.1)
 
         #base.disableMouse()
 
@@ -59,7 +59,7 @@ class PupperDisplay(ShowBase):
         hw = 10.0
         hh = 20.0
 
-        height = 60.0
+        height = 27.0
 
         legStarts = [
             Vec3(hw, hh, height),
@@ -101,11 +101,16 @@ class PupperDisplay(ShowBase):
         
     def setupLights(self):
         ambientLight = AmbientLight("ambientLight")
-        ambientLight.setColor((0.05, 0.05, 0.05, 1.0))
+        ambientLight.setColor((0.2, 0.2, 0.2, 1.0))
         
         directionalLight = DirectionalLight("directionalLight")
         directionalLight.setDirection(Vec3(0.0, 0.2, -1.0).normalized())
         directionalLight.setColor((0.9, 0.9, 0.9, 1.0))
+
+        directionalLight.setShadowCaster(True, 1024, 1024)
+        directionalLight.getLens().setNearFar(-1000.0, 1000)
+        directionalLight.getLens().setFilmSize(200, 200)
+        directionalLight.getLens().setViewVector(directionalLight.getDirection(), Vec3(1, 0, 0))
 
         self.directionalLightNode = render.attachNewNode(directionalLight)
 
@@ -113,8 +118,8 @@ class PupperDisplay(ShowBase):
         render.setLight(render.attachNewNode(ambientLight))
 
     def mainLoop(self, task):
-        camera.setPos(Vec3(-150.0, 150.0, 150.0))
-        camera.lookAt(Vec3(0.0, 0.0, 50.0))
+        camera.setPos(Vec3(-150.0, 150.0, 100.0))
+        camera.lookAt(Vec3(0.0, 0.0, 10.0))
 
         ANGLE_RES = self.h.getInputSize(0).z
 

@@ -31,12 +31,17 @@ def main(use_imu=False):
     print("z clearance: ", config.z_clearance)
     print("x shift: ", config.x_shift)
 
+    t = 0.0
+
     while True:
         # Parse the udp joystick commands and then update the robot controller's parameters
         command = Command()
 
         # Go forward at max speed
-        command.horizontal_velocity = np.array([1.0, 0.0])
+        command.horizontal_velocity = np.array([np.cos(t), np.sin(t)])
+
+        t += config.dt * 0.2
+        t = t % (2.0 * np.pi)
 
         quat_orientation = (
             np.array([1, 0, 0, 0])

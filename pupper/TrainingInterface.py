@@ -17,7 +17,7 @@ class TrainingInterface:
 
         lds = []
 
-        for i in range(3):
+        for i in range(5):
             ld = pyogmaneo.LayerDesc()
             ld.hiddenSize = Int3(4, 4, 16)
 
