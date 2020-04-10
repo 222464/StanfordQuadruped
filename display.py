@@ -127,10 +127,8 @@ class PupperDisplay(ShowBase):
 
         # Adjust angles
         for i in range(4):
-            flip = 1.0 if i == 1 or i == 3 else -1.0
-            
             q1 = Quat()
-            q1.setFromAxisAngleRad(flip * self.angles[0 * 4 + i], Vec3(0.0, 1.0, 0.0))
+            q1.setFromAxisAngleRad(self.angles[0 * 4 + i], Vec3(0.0, 1.0, 0.0))
             
             q2 = Quat()
             q2.setFromAxisAngleRad(-self.angles[1 * 4 + i], Vec3(1.0, 0.0, 0.0))

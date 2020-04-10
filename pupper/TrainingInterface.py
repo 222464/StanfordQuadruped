@@ -31,7 +31,7 @@ class TrainingInterface:
             lds.append(ld)
 
         input_sizes = [ Int3(4, 3, ANGLE_RESOLUTION) ]
-        input_types = [ pyogmaneo.inputTypeAction ]
+        input_types = [ pyogmaneo.inputTypePrediction ]
 
         if self.imu is not None:
             input_sizes.append(Int3(3, 2, IMU_RESOLUTION))
