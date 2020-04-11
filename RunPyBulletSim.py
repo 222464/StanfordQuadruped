@@ -46,7 +46,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
     start_sim_time = time.time()
 
-    reward = 1.0
+    reward = 0.0
     steps = 0
 
     while True:

@@ -44,6 +44,9 @@ class TrainingInterface:
 
         self.num_samples = 0
 
+    def set_reward(self, reward):
+        self.reward = reward
+
     def set_actuator_positions(self, joint_angles):
         joint_angles_raveled = joint_angles.ravel()
 
@@ -65,7 +68,7 @@ class TrainingInterface:
             self.average_error = self.average_error_decay * self.average_error + (1.0 - self.average_error_decay) * error
 
             # Update agent
-            self.h.step(self.cs, [ angle_SDR ], True, 0.1) # Constant positive reward encourages prediction of angles
+            self.h.step(self.cs, [ angle_SDR ], True, self.reward) # Constant positive reward encourages prediction of angles
         else:
             pass # TODO: Implement?
 
