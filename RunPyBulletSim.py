@@ -12,6 +12,8 @@ from sim.HardwareInterface import HardwareInterface
 from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
+import pyogmaneo
+
 
 def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock_frame_rate=True):
     # Create config
@@ -24,27 +26,12 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     if use_imu:
         imu = IMU()
 
-    # Create controller and user input handles
-    controller = Controller(config, four_legs_inverse_kinematics,)
-    state = State()
-    command = Command()
+    # Load hierarchy
+    cs = pyogmaneo.ComputeSystem()
 
-    # Emulate the joystick inputs required to activate the robot
-    command.activate_event = 1
-    controller.run(state, command)
-    command.activate_event = 0
-    command.trot_event = 1
-    controller.run(state, command)
-    command = Command()  # zero it out
+    h = pyogmaneo.Hierarchy("pupper.ohr")
 
-    # Apply a constant command. # TODO Add support for user input or an external commander
-    command.horizontal_velocity = default_velocity
-    command.yaw_rate = default_yaw_rate
-
-    # The joystick service is linux-only, so commenting out for mac
-    # print("Creating joystick listener...")
-    # joystick_interface = JoystickInterface(config)
-    # print("Done.")
+    angles = 12 * [ 0.0 ]
 
     print("Summary of gait parameters:")
     print("overlap time: ", config.overlap_time)
@@ -70,15 +57,30 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             last_control_update = sim_time_elapsed
 
             # Get IMU measurement if enabled
-            state.quat_orientation = (
+            quat_orientation = (
                 imu.read_orientation() if use_imu else np.array([1, 0, 0, 0])
             )
+            
+            ANGLE_RES = h.getInputSize(0).z
 
-            # Step the controller forward by dt
-            controller.run(state, command)
+            h.step(cs, [ h.getPredictionCs(0) ], False, 1.0)
+
+            joint_angles = np.zeros((3, 4))
+
+            motor_index = 0
+
+            for segment_index in range(3):
+                for leg_index in range(4):
+                    target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RES - 1) * 2.0 - 1.0) * (0.5 * np.pi)
+                    
+                    angles[motor_index] += 0.3 * (target_angle - angles[motor_index])
+
+                    joint_angles[segment_index, leg_index] = angles[motor_index]
+
+                    motor_index += 1
 
             # Update the pwm widths going to the servos
-            hardware_interface.set_actuator_postions(state.joint_angles)
+            hardware_interface.set_actuator_postions(joint_angles)
 
         # Simulate physics for 1/240 seconds (the default timestep)
         sim.step()
