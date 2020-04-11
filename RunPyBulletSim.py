@@ -39,9 +39,6 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     print("z clearance: ", config.z_clearance)
     print("x shift: ", config.x_shift)
 
-    # Run the simulation
-    timesteps = 240 * 60 * 10  # simulate for a max of 10 minutes
-
     # Sim seconds per sim step
     sim_steps_per_sim_second = 240
     sim_dt = 1.0 / sim_steps_per_sim_second
@@ -49,7 +46,10 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
     start_sim_time = time.time()
 
-    for steps in range(timesteps):
+    reward = 1.0
+    steps = 0
+
+    while True:
         start_step_time = time.time()
 
         sim_time_elapsed = sim_dt * steps
@@ -63,7 +63,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             
             ANGLE_RES = h.getInputSize(0).z
 
-            h.step(cs, [ h.getPredictionCs(0) ], False, 1.0)
+            h.step(cs, [ h.getPredictionCs(0) ], True, reward)
 
             joint_angles = np.zeros((3, 4))
 
@@ -73,7 +73,14 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
                 for leg_index in range(4):
                     target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RES - 1) * 2.0 - 1.0) * (0.5 * np.pi)
                     
-                    angles[motor_index] += 0.3 * (target_angle - angles[motor_index])
+                    delta = 0.2 * (target_angle - angles[motor_index])
+
+                    max_delta = 0.03
+
+                    if abs(delta) > max_delta:
+                        delta = max_delta if delta > 0.0 else -max_delta
+
+                    angles[motor_index] += delta
 
                     joint_angles[segment_index, leg_index] = angles[motor_index]
 
@@ -83,22 +90,26 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             hardware_interface.set_actuator_postions(joint_angles)
 
         # Simulate physics for 1/240 seconds (the default timestep)
-        sim.step()
+        reward = sim.step()
+
+        print(reward)
+
+        steps += 1
 
         # Performance testing
         step_elapsed = time.time() - start_step_time
 
-        if (steps % 60) == 0:
-            print(
-                "Sim seconds elapsed: {}, Real seconds elapsed: {}".format(
-                    round(sim_time_elapsed, 3), round(time.time() - start_sim_time, 3)
-                )
-            )
-            # print("Average steps per second: {0}, elapsed: {1}, i:{2}".format(steps / elapsed, elapsed, i))
+        # if (steps % 60) == 0:
+        #     print(
+        #         "Sim seconds elapsed: {}, Real seconds elapsed: {}".format(
+        #             round(sim_time_elapsed, 3), round(time.time() - start_sim_time, 3)
+        #         )
+        #     )
+        #     # print("Average steps per second: {0}, elapsed: {1}, i:{2}".format(steps / elapsed, elapsed, i))
 
         # Keep framerate
         if lock_frame_rate:
             time.sleep(max(0, sim_dt - step_elapsed))
 
 if __name__ == "__main__":
-    main(default_velocity=np.array([0.5, 0]))
+    main(default_velocity=np.array([0.5, 0]), lock_frame_rate=False)
