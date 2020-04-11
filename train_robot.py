@@ -40,7 +40,7 @@ def main(use_imu=False):
         # Go forward at max speed
         command.horizontal_velocity = np.array([np.cos(t), np.sin(t)])
 
-        t += config.dt * 0.2
+        t += config.dt * 0.4
         t = t % (2.0 * np.pi)
 
         quat_orientation = (

@@ -128,7 +128,7 @@ class PupperDisplay(ShowBase):
         for i in range(12):
             target_angle = (self.h.getPredictionCs(0)[i] / float(ANGLE_RES - 1) * 2.0 - 1.0) * (0.3 * np.pi)
             
-            self.angles[i] += 0.3 * (target_angle - self.angles[i])
+            self.angles[i] += 0.1 * (target_angle - self.angles[i])
 
         # Adjust angles
         for i in range(4):

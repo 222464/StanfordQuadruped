@@ -17,7 +17,7 @@ class TrainingInterface:
 
         lds = []
 
-        for i in range(5):
+        for i in range(6):
             ld = pyogmaneo.LayerDesc()
             ld.hiddenSize = Int3(4, 4, 16)
 
@@ -31,7 +31,7 @@ class TrainingInterface:
             lds.append(ld)
 
         input_sizes = [ Int3(4, 3, ANGLE_RESOLUTION) ]
-        input_types = [ pyogmaneo.inputTypePrediction ]
+        input_types = [ pyogmaneo.inputTypeAction ]
 
         if self.imu is not None:
             input_sizes.append(Int3(3, 2, IMU_RESOLUTION))
