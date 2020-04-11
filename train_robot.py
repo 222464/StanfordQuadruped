@@ -38,7 +38,7 @@ def main(use_imu=False):
         command = Command()
 
         # Go forward at max speed
-        command.horizontal_velocity = np.array([np.cos(t), np.sin(t)])
+        command.horizontal_velocity = np.array([np.cos(t), np.sin(t)]) * 0.3
 
         t += config.dt * 0.4
         t = t % (2.0 * np.pi)
