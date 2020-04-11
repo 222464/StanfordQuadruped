@@ -7,17 +7,16 @@ from sim.IMU import IMU
 from sim.Sim import Sim
 from common.Controller import Controller
 from common.Command import Command
-from common.JoystickInterface import JoystickInterface
 from common.State import State
 from sim.HardwareInterface import HardwareInterface
 from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
 
-def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0):
+def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock_frame_rate=True):
     # Create config
     config = Configuration()
-    config.z_clearance = 0.02
+    config.z_clearance = 0.05
     sim = Sim(xml_path="sim/pupper_pybullet_out.xml")
     hardware_interface = HardwareInterface(sim.model, sim.joint_indices)
 
@@ -60,9 +59,12 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0):
     sim_steps_per_sim_second = 240
     sim_dt = 1.0 / sim_steps_per_sim_second
     last_control_update = 0
-    start = time.time()
+
+    start_sim_time = time.time()
 
     for steps in range(timesteps):
+        start_step_time = time.time()
+
         sim_time_elapsed = sim_dt * steps
         if sim_time_elapsed - last_control_update > config.dt:
             last_control_update = sim_time_elapsed
@@ -82,15 +84,19 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0):
         sim.step()
 
         # Performance testing
-        elapsed = time.time() - start
+        step_elapsed = time.time() - start_step_time
+
         if (steps % 60) == 0:
             print(
                 "Sim seconds elapsed: {}, Real seconds elapsed: {}".format(
-                    round(sim_time_elapsed, 3), round(elapsed, 3)
+                    round(sim_time_elapsed, 3), round(time.time() - start_sim_time, 3)
                 )
             )
             # print("Average steps per second: {0}, elapsed: {1}, i:{2}".format(steps / elapsed, elapsed, i))
 
+        # Keep framerate
+        if lock_frame_rate:
+            time.sleep(max(0, sim_dt - step_elapsed))
 
 if __name__ == "__main__":
-    main(default_velocity=np.array([0.15, 0]))
+    main(default_velocity=np.array([0.5, 0]))

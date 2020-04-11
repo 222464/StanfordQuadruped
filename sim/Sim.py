@@ -16,6 +16,16 @@ class Sim:
         pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
         pybullet.setGravity(0, 0, g)
         self.model = pybullet.loadMJCF(xml_path)
+        #pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.35 ], [ 0, 0, 0, 1 ])
+
+        # Set default camera a bit closer
+        camInfo = pybullet.getDebugVisualizerCamera()
+        curTargetPos = camInfo[11]
+        yaw = camInfo[8]
+        pitch = camInfo[9]
+
+        pybullet.resetDebugVisualizerCamera(1.0, yaw, pitch, pybullet.getBasePositionAndOrientation(self.model[1])[0])
+
         print("")
         print("Pupper body IDs:", self.model)
         numjoints = pybullet.getNumJoints(self.model[1])
@@ -26,4 +36,13 @@ class Sim:
         self.joint_indices = list(range(0, 24, 2))
 
     def step(self):
+        # Follow camera
+        camInfo = pybullet.getDebugVisualizerCamera()
+        curTargetPos = camInfo[11]
+        distance = camInfo[10]
+        yaw = camInfo[8]
+        pitch = camInfo[9]
+
+        pybullet.resetDebugVisualizerCamera(distance, yaw, pitch, pybullet.getBasePositionAndOrientation(self.model[1])[0])
+
         pybullet.stepSimulation()
