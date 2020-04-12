@@ -67,7 +67,7 @@ class Sim:
 
         # Additional runtime params
         self.tipThresh = 0.2
-        self.yawThresh = 0.4
+        self.yawThresh = 0.3
 
     def reset(self):
         pybullet.resetSimulation()
@@ -75,7 +75,7 @@ class Sim:
 
         self.model = pybullet.loadMJCF(self.xml_path)
 
-        #pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.35 ], [ 0, 0, 0, 1 ])
+        #pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.3 ], [ 0, 0, 0, 1 ])
 
     def step(self):
         # Follow camera
@@ -85,7 +85,9 @@ class Sim:
         yaw = camInfo[8]
         pitch = camInfo[9]
 
-        reward = pybullet.getBaseVelocity(self.model[1])[0][0]
+        vels = pybullet.getBaseVelocity(self.model[1])
+
+        reward = vels[0][0]
 
         posOrient = pybullet.getBasePositionAndOrientation(self.model[1])
 
@@ -93,7 +95,7 @@ class Sim:
         forwardVec = rotateVec(posOrient[1], [ 1.0, 0.0, 0.0 ])
 
         if upVec[2] < self.tipThresh or forwardVec[0] < self.yawThresh:
-            reward = -10.0
+            reward = -100.0
 
             self.reset()
         else:
@@ -101,4 +103,4 @@ class Sim:
 
             pybullet.stepSimulation()
 
-        return reward
+        return reward, vels

@@ -13,7 +13,11 @@ from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
 import pyogmaneo
+from pyogmaneo import Int3
 
+ANGLE_RESOLUTION = 16
+IMU_RESOLUTION = 16
+IMU_SQUASH_SCALE = 1.0
 
 def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock_frame_rate=True):
     # Create config
@@ -29,6 +33,29 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     # Load hierarchy
     cs = pyogmaneo.ComputeSystem()
 
+    # lds = []
+
+    # for i in range(5):
+    #     ld = pyogmaneo.LayerDesc()
+    #     ld.hiddenSize = Int3(4, 4, 16)
+
+    #     ld.ffRadius = 4
+    #     ld.pRadius = 4
+    #     ld.aRadius = 4
+
+    #     ld.ticksPerUpdate = 2
+    #     ld.temporalHorizon = 2
+
+    #     lds.append(ld)
+
+    # input_sizes = [ Int3(4, 3, ANGLE_RESOLUTION) ]
+    # input_types = [ pyogmaneo.inputTypeAction ]
+
+    # input_sizes.append(Int3(3, 2, IMU_RESOLUTION))
+    # input_types.append(pyogmaneo.inputTypeNone)
+
+    #h = pyogmaneo.Hierarchy(cs, input_sizes, input_types, lds)
+
     h = pyogmaneo.Hierarchy("pupper.ohr")
 
     angles = 12 * [ 0.0 ]
@@ -42,74 +69,69 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     # Sim seconds per sim step
     sim_steps_per_sim_second = 240
     sim_dt = 1.0 / sim_steps_per_sim_second
-    last_control_update = 0
 
     start_sim_time = time.time()
 
     reward = 0.0
+    vels = ( [ 0, 0, 0 ], [ 0, 0, 0 ] )
     steps = 0
 
     while True:
         start_step_time = time.time()
 
-        sim_time_elapsed = sim_dt * steps
-        if sim_time_elapsed - last_control_update > config.dt:
-            last_control_update = sim_time_elapsed
+        # Get IMU measurement if enabled
+        quat_orientation = (
+            imu.read_orientation() if use_imu else np.array([1, 0, 0, 0])
+        )
+        
+        imu_vals = list(vels[0]) + list(vels[1])
 
-            # Get IMU measurement if enabled
-            quat_orientation = (
-                imu.read_orientation() if use_imu else np.array([1, 0, 0, 0])
-            )
-            
-            ANGLE_RES = h.getInputSize(0).z
+        imu_SDR = []
 
-            h.step(cs, [ h.getPredictionCs(0) ], True, reward)
+        for i in range(len(imu_vals)):
+            imu_SDR.append(int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
 
-            joint_angles = np.zeros((3, 4))
+        h.step(cs, [ h.getPredictionCs(0), imu_SDR ], True, reward)
 
-            motor_index = 0
+        joint_angles = np.zeros((3, 4))
 
-            for segment_index in range(3):
-                for leg_index in range(4):
-                    target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RES - 1) * 2.0 - 1.0) * (0.5 * np.pi)
-                    
-                    delta = 0.2 * (target_angle - angles[motor_index])
+        motor_index = 0
 
-                    max_delta = 0.03
+        for segment_index in range(3):
+            for leg_index in range(4):
+                target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.5 * np.pi)
+                
+                delta = 0.3 * (target_angle - angles[motor_index])
 
-                    if abs(delta) > max_delta:
-                        delta = max_delta if delta > 0.0 else -max_delta
+                max_delta = 0.04
 
-                    angles[motor_index] += delta
+                if abs(delta) > max_delta:
+                    delta = max_delta if delta > 0.0 else -max_delta
 
-                    joint_angles[segment_index, leg_index] = angles[motor_index]
+                angles[motor_index] += delta
 
-                    motor_index += 1
+                joint_angles[segment_index, leg_index] = angles[motor_index]
 
-            # Update the pwm widths going to the servos
-            hardware_interface.set_actuator_postions(joint_angles)
+                motor_index += 1
+
+        # Update the pwm widths going to the servos
+        hardware_interface.set_actuator_postions(joint_angles)
 
         # Simulate physics for 1/240 seconds (the default timestep)
-        reward = sim.step()
+        reward, vels = sim.step()
 
-        print(reward)
+        if steps % 10000 == 9999:
+            print("Saving...")
+            h.save("pupper_rltrained.ohr")
 
         steps += 1
 
         # Performance testing
         step_elapsed = time.time() - start_step_time
 
-        # if (steps % 60) == 0:
-        #     print(
-        #         "Sim seconds elapsed: {}, Real seconds elapsed: {}".format(
-        #             round(sim_time_elapsed, 3), round(time.time() - start_sim_time, 3)
-        #         )
-        #     )
-        #     # print("Average steps per second: {0}, elapsed: {1}, i:{2}".format(steps / elapsed, elapsed, i))
-
         # Keep framerate
         if lock_frame_rate:
             time.sleep(max(0, sim_dt - step_elapsed))
 
 if __name__ == "__main__":
-    main(default_velocity=np.array([0.5, 0]), lock_frame_rate=False)
+    main(default_velocity=np.array([0.5, 0]), lock_frame_rate=True)

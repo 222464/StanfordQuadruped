@@ -13,6 +13,7 @@ def main(use_imu=False):
 
     # Create config
     config = Configuration()
+    config.z_clearance = 0.07
     training_interface = TrainingInterface()
 
     # Create controller and user input handles
@@ -25,7 +26,7 @@ def main(use_imu=False):
     # Behavior to learn
     state.behavior_state = BehaviorState.TROT
 
-    speed = 0.4
+    speed = 0.2
 
     training_interface.set_reward(speed)
 
@@ -39,7 +40,6 @@ def main(use_imu=False):
         # Parse the udp joystick commands and then update the robot controller's parameters
         command = Command()
 
-        speed = min(1.0, max(-1.0, 0.4 + np.random.randn() * 0.03))
         training_interface.set_reward(speed)
 
         # Go forward at max speed
