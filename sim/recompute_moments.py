@@ -28,9 +28,9 @@ for l in d["robot"]["link"]:
             i["@iyz"] = 0.0
             i["@izz"] = 1.0 / 12.0 * m * (size[0] ** 2 + size[1] ** 2)
 
-        elif "capsule" in g: # Capsule rotated about center
+        elif "capsule" in g: # Capsule rotated about center (approximated with cylinder)
             length = float(g["capsule"]["@length"])
-            radius = float(g["capsule"]["@radius"])
+            #radius = float(g["capsule"]["@radius"])
 
             i["@ixx"] = 1.0 / 12.0 * m * (length ** 2)
             i["@ixy"] = 0.0
