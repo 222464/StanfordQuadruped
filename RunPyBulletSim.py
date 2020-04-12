@@ -23,7 +23,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     # Create config
     config = Configuration()
     config.z_clearance = 0.05
-    sim = Sim(xml_path="sim/pupper_pybullet_out.xml")
+    sim = Sim()
     hardware_interface = HardwareInterface(sim.model, sim.joint_indices)
 
     # Create imu handle
@@ -72,53 +72,63 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
     start_sim_time = time.time()
 
+    sim_time_elapsed = 0.0
+
     reward = 0.0
+    control_reward_accum = 0.0
+    control_reward_accum_steps = 0
     vels = ( [ 0, 0, 0 ], [ 0, 0, 0 ] )
     steps = 0
 
     while True:
         start_step_time = time.time()
 
-        # Get IMU measurement if enabled
-        quat_orientation = (
-            imu.read_orientation() if use_imu else np.array([1, 0, 0, 0])
-        )
+        sim_time_elapsed += sim_dt
         
-        imu_vals = list(vels[0]) + list(vels[1])
+        if sim_time_elapsed > config.dt:
+            sim_time_elapsed = sim_time_elapsed % config.dt
 
-        imu_SDR = []
+            imu_vals = list(vels[0]) + list(vels[1])
 
-        for i in range(len(imu_vals)):
-            imu_SDR.append(int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
+            imu_SDR = []
 
-        h.step(cs, [ h.getPredictionCs(0), imu_SDR ], True, reward)
+            for i in range(len(imu_vals)):
+                imu_SDR.append(int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
 
-        joint_angles = np.zeros((3, 4))
+            h.step(cs, [ h.getPredictionCs(0), imu_SDR ], True, control_reward_accum / max(1, control_reward_accum_steps))
+            
+            control_reward_accum = 0.0
+            control_reward_accum_steps = 0
 
-        motor_index = 0
+            joint_angles = np.zeros((3, 4))
 
-        for segment_index in range(3):
-            for leg_index in range(4):
-                target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.5 * np.pi)
-                
-                delta = 0.3 * (target_angle - angles[motor_index])
+            motor_index = 0
 
-                max_delta = 0.04
+            for segment_index in range(3):
+                for leg_index in range(4):
+                    target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.5 * np.pi)
+                    
+                    delta = 0.3 * (target_angle - angles[motor_index])
 
-                if abs(delta) > max_delta:
-                    delta = max_delta if delta > 0.0 else -max_delta
+                    max_delta = 0.04
 
-                angles[motor_index] += delta
+                    if abs(delta) > max_delta:
+                        delta = max_delta if delta > 0.0 else -max_delta
 
-                joint_angles[segment_index, leg_index] = angles[motor_index]
+                    angles[motor_index] += delta
 
-                motor_index += 1
+                    joint_angles[segment_index, leg_index] = angles[motor_index]
 
-        # Update the pwm widths going to the servos
-        hardware_interface.set_actuator_postions(joint_angles)
+                    motor_index += 1
+
+            # Update the pwm widths going to the servos
+            hardware_interface.set_actuator_postions(joint_angles)
 
         # Simulate physics for 1/240 seconds (the default timestep)
         reward, vels = sim.step()
+
+        control_reward_accum += reward
+        control_reward_accum_steps += 1
 
         if steps % 10000 == 9999:
             print("Saving...")

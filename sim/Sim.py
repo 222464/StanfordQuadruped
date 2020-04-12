@@ -33,13 +33,11 @@ def rotationInverse(q):
 class Sim:
     def __init__(
         self,
-        xml_path,
         kp=0.25,
         kv=0.5,
         max_torque=10,
         g=-9.81,
     ):
-        self.xml_path = xml_path
         self.g = g
         
         # Set up PyBullet Simulator
@@ -59,7 +57,7 @@ class Sim:
         print("")
         print("Pupper body IDs:", self.model)
         numjoints = pybullet.getNumJoints(self.model[1])
-        print("Number of joints in converted MJCF: ", numjoints)
+        print("Number of joints: ", numjoints)
         print("Joint Info: ")
         for i in range(numjoints):
             print(pybullet.getJointInfo(self.model[1], i))
@@ -67,15 +65,15 @@ class Sim:
 
         # Additional runtime params
         self.tipThresh = 0.2
-        self.yawThresh = 0.3
+        self.yawThresh = 0.2
 
     def reset(self):
         pybullet.resetSimulation()
         pybullet.setGravity(0, 0, self.g)
 
-        self.model = pybullet.loadMJCF(self.xml_path)
+        self.model = ( pybullet.loadURDF("sim/floor.urdf"), pybullet.loadURDF("sim/pupper_moment.urdf") )
 
-        #pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.3 ], [ 0, 0, 0, 1 ])
+        pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.32 ], [ 0, 0, 0, 1 ])
 
     def step(self):
         # Follow camera

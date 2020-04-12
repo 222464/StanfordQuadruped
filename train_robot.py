@@ -13,7 +13,7 @@ def main(use_imu=False):
 
     # Create config
     config = Configuration()
-    config.z_clearance = 0.07
+    config.z_clearance = 0.05
     training_interface = TrainingInterface()
 
     # Create controller and user input handles
@@ -26,7 +26,7 @@ def main(use_imu=False):
     # Behavior to learn
     state.behavior_state = BehaviorState.TROT
 
-    speed = 0.2
+    speed = 0.5
 
     training_interface.set_reward(speed)
 

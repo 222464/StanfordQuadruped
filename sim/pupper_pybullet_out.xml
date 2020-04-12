@@ -17,7 +17,7 @@ _x indicates rotation on the forward/back axis of the robot
 _y indicates rotation on the left/right axis of the hip module
 _ext indicates linear extension of the leg. Positive values = leg goes up
 -->
-<mujoco model="cheetah">
+<mujoco model="pupper">
 <compiler angle="radian" coordinate="local" inertiafromgeom="false"/>
 
 <default>
@@ -45,14 +45,14 @@ _ext indicates linear extension of the leg. Positive values = leg goes up
 
         <body name="fr_module" pos="0.1 -0.04 0">
             <geom pos="0 -0.0132 0" name="fr_block" type="box" size="0.0197 0.0372 0.0107" rgba="0.6 0.8 .4 1"/>
-            <joint axis="1 0 0" name="fr_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+            <joint axis="1 0 0" name="fr_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
             <inertial pos="0 0 0" mass="0.08" diaginertia="3.698e-05 7.127e-06 4.075e-05"/>
             <body name="fr" pos="0 -0.03 0">
-                <joint axis="0 1 0" name="fr_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+                <joint axis="0 1 0" name="fr_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
                 <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                 <geom axisangle="0 1 0 0" name="fr" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba = "1 0 0 0.5" density="50"/>
                 <body name="fr2" pos="0 0 -0.1235">
-                    <joint axis="0 1 0" name="fr_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="1.049"/>
+                    <joint axis="0 1 0" name="fr_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="0.01"/>
                     <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                     <geom axisangle="0 1 0 0" name="fr_l2" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba="1 0 0 0.5" density="50"/>
                 </body>
@@ -61,14 +61,14 @@ _ext indicates linear extension of the leg. Positive values = leg goes up
 
         <body name="fl_module" pos="0.1 0.04 0">
             <geom pos = "0 0.0132 0" name="fl_block" type="box" size="0.0197 0.0372 0.0107" rgba="0.6 0.8 .4 1"/>
-            <joint axis="1 0 0" name="fl_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+            <joint axis="1 0 0" name="fl_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
             <inertial pos="0 0 0" mass="0.08" diaginertia="3.698e-05 7.127e-06 4.075e-05"/>
             <body name="fl" pos="0 0.03 0">
-                <joint axis="0 1 0" name="fl_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+                <joint axis="0 1 0" name="fl_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
                 <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                 <geom axisangle="0 1 0 0" name="fl" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba = "1 0 0 0.5" density="50"/>
                 <body name="fl2" pos="0 0 -0.1235">
-                    <joint axis="0 1 0" name="fl_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="1.049"/>
+                    <joint axis="0 1 0" name="fl_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="0.01"/>
                     <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                     <geom axisangle="0 1 0 0" name="fl_l2" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba="1 0 0 0.5" density="50"/>
                 </body>
@@ -77,14 +77,14 @@ _ext indicates linear extension of the leg. Positive values = leg goes up
 
         <body name="br_module" pos="-0.1 -0.04 0">
             <geom pos = "0 -0.0132 0" name="br_block" type="box" size="0.0197 0.0372 0.0107" rgba="0.6 0.8 .4 1"/>
-            <joint axis="1 0 0" name="br_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+            <joint axis="1 0 0" name="br_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
             <inertial pos="0 0 0" mass="0.08" diaginertia="3.698e-05 7.127e-06 4.075e-05"/>
             <body name="br" pos="0 -0.03 0">
-                <joint axis="0 1 0" name="br_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+                <joint axis="0 1 0" name="br_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
                 <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                 <geom axisangle="0 1 0 0" name="br" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba = "1 0 0 0.5" density="50"/>
                 <body name="br2" pos="0 0 -0.1235">
-                    <joint axis="0 1 0" name="br_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="1.049"/>
+                    <joint axis="0 1 0" name="br_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="0.01"/>
                     <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                     <geom axisangle="0 1 0 0" name="br_l2" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba="1 0 0 0.5" density="50"/>
                 </body>
@@ -93,14 +93,14 @@ _ext indicates linear extension of the leg. Positive values = leg goes up
 
         <body name="bl_module" pos="-0.1 0.04 0">
             <geom pos = "0 0.0132 0" name="bl_block" type="box" size="0.0197 0.0372 0.0107" rgba="0.6 0.8 .4 1"/>
-            <joint axis="1 0 0" name="bl_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+            <joint axis="1 0 0" name="bl_x" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
             <inertial pos="0 0 0" mass="0.08" diaginertia="3.698e-05 7.127e-06 4.075e-05"/>
             <body name="bl" pos="0 0.03 0">
-                <joint axis="0 1 0" name="bl_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="1.049"/>
+                <joint axis="0 1 0" name="bl_y" pos="0 0 0" limited="true" range="-1.57 1.57" type="hinge" damping="0.01"/>
                 <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                 <geom axisangle="0 1 0 0" name="bl" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba = "1 0 0 0.5" density="50"/>
                 <body name="bl2" pos="0 0 -0.1235">
-                    <joint axis="0 1 0" name="bl_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="1.049"/>
+                    <joint axis="0 1 0" name="bl_y2" pos="0 0 0" limited="true" range="-3.14 0.0" type="hinge" damping="0.01"/>
                     <inertial pos="0 0 0" mass="0.03" diaginertia="1.3020833333333332e-05 1.3020833333333332e-05 1e-06"/>
                     <geom axisangle="0 1 0 0" name="bl_l2" fromto="0 0 0 0 0 -0.125" size="0.01" type="capsule" rgba="1 0 0 0.5" density="50"/>
                 </body>
