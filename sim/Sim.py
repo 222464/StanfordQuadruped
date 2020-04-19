@@ -58,6 +58,7 @@ class Sim:
         # Additional runtime params
         self.tipThresh = 0.2
         self.yawThresh = 0.2
+        self.velRewardScale = 1.2
 
     def reset(self):
         pybullet.resetSimulation()
@@ -77,7 +78,7 @@ class Sim:
 
         vels = pybullet.getBaseVelocity(self.model[1])
 
-        reward = vels[0][0]
+        reward = self.velRewardScale * vels[0][0]
 
         posOrient = pybullet.getBasePositionAndOrientation(self.model[1])
 
@@ -85,7 +86,7 @@ class Sim:
         forwardVec = rotateVec(posOrient[1], [ 1.0, 0.0, 0.0 ])
 
         if upVec[2] < self.tipThresh or forwardVec[0] < self.yawThresh:
-            reward = -100.0
+            reward = -10.0
 
             self.reset()
         else:

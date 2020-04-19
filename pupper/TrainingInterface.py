@@ -26,11 +26,12 @@ IMU_RESOLUTION = 16
 
 class TrainingInterface:
     def __init__(self):
+        pyogmaneo.ComputeSystem.setNumThreads(4)
         self.cs = pyogmaneo.ComputeSystem()
 
         lds = []
 
-        for i in range(5):
+        for i in range(4):
             ld = pyogmaneo.LayerDesc()
             ld.hiddenSize = Int3(4, 4, 16)
 
@@ -39,7 +40,7 @@ class TrainingInterface:
             ld.aRadius = 4
 
             ld.ticksPerUpdate = 2
-            ld.temporalHorizon = 2
+            ld.temporalHorizon = 4
 
             lds.append(ld)
 

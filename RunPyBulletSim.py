@@ -31,6 +31,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
         imu = IMU()
 
     # Load hierarchy
+    pyogmaneo.ComputeSystem.setNumThreads(4)
     cs = pyogmaneo.ComputeSystem()
 
     # lds = []
