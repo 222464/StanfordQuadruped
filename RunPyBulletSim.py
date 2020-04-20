@@ -114,7 +114,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
   
             actions = list(h.getPredictionCs(0))
 
-            actions = mutate(np.array(actions), 0.02, h.getInputSize(0).z).tolist()
+            #actions = mutate(np.array(actions), 0.02, h.getInputSize(0).z).tolist()
 
             control_reward_accum = 0.0
             control_reward_accum_steps = 0
