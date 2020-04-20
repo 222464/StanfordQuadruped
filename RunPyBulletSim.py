@@ -111,10 +111,10 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
                 imu_SDR.append(int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
 
             h.step(cs, [ actions, imu_SDR ], True, control_reward_accum / max(1, control_reward_accum_steps))
-            
+  
             actions = list(h.getPredictionCs(0))
 
-            #actions = mutate(np.array(actions), 0.01, h.getInputSize(0).z).tolist()
+            actions = mutate(np.array(actions), 0.02, h.getInputSize(0).z).tolist()
 
             control_reward_accum = 0.0
             control_reward_accum_steps = 0
