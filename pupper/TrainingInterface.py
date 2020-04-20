@@ -21,6 +21,17 @@ def rotateVec(q, v):
         v[1] + uv[1] + uuv[1],
         v[2] + uv[2] + uuv[2] ]
 
+def mutate(x, rate, oneHotSize):
+    z = copy(x)
+
+    indices = np.where(np.random.rand(len(z)) < rate)
+
+    randSDR = np.random.randint(0, oneHotSize, size=(len(x)))
+
+    z[indices] = randSDR[indices]
+
+    return z
+
 ANGLE_RESOLUTION = 16
 IMU_RESOLUTION = 16
 
@@ -52,7 +63,7 @@ class TrainingInterface:
 
         self.h = pyogmaneo.Hierarchy(self.cs, input_sizes, input_types, lds)
 
-        self.reward = 0.0
+        self.reward = 1.0
 
         self.average_error = 0.0
         self.average_error_decay = 0.999
@@ -65,6 +76,11 @@ class TrainingInterface:
     def set_actuator_positions(self, joint_angles):
         joint_angles_raveled = joint_angles.ravel()
 
+        # Mutate
+        #joint_angles_mut = joint_angles_raveled + np.random.randn(joint_angles_raveled.shape[0]) * 0.1
+
+        #noise_error = np.sum(np.square(joint_angles_raveled - joint_angles_mut))
+        
         angle_SDR = [ int((min(1.0, max(-1.0, joint_angles_raveled[i] / (0.5 * np.pi))) * 0.5 + 0.5) * (ANGLE_RESOLUTION - 1) + 0.5) for i in range(len(joint_angles_raveled)) ]
 
         # Compare predictions

@@ -2,6 +2,7 @@ import pybullet as p
 import pybullet_data
 import time
 import numpy as np
+from copy import copy
 
 from sim.IMU import IMU
 from sim.Sim import Sim
@@ -18,6 +19,17 @@ from pyogmaneo import Int3
 ANGLE_RESOLUTION = 16
 IMU_RESOLUTION = 16
 IMU_SQUASH_SCALE = 1.0
+
+def mutate(x, rate, oneHotSize):
+    z = copy(x)
+
+    indices = np.where(np.random.rand(len(z)) < rate)
+
+    randSDR = np.random.randint(0, oneHotSize, size=(len(x)))
+
+    z[indices] = randSDR[indices]
+
+    return z
 
 def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock_frame_rate=True):
     # Create config
@@ -81,6 +93,8 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     vels = ( [ 0, 0, 0 ], [ 0, 0, 0 ] )
     steps = 0
 
+    actions = list(h.getPredictionCs(0))
+
     while True:
         start_step_time = time.time()
 
@@ -96,8 +110,12 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             for i in range(len(imu_vals)):
                 imu_SDR.append(int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
 
-            h.step(cs, [ h.getPredictionCs(0), imu_SDR ], True, control_reward_accum / max(1, control_reward_accum_steps))
+            h.step(cs, [ actions, imu_SDR ], True, control_reward_accum / max(1, control_reward_accum_steps))
             
+            actions = list(h.getPredictionCs(0))
+
+            #actions = mutate(np.array(actions), 0.01, h.getInputSize(0).z).tolist()
+
             control_reward_accum = 0.0
             control_reward_accum_steps = 0
 
@@ -107,7 +125,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
             for segment_index in range(3):
                 for leg_index in range(4):
-                    target_angle = (h.getPredictionCs(0)[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.5 * np.pi)
+                    target_angle = (actions[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.5 * np.pi)
                     
                     delta = 0.3 * (target_angle - angles[motor_index])
 

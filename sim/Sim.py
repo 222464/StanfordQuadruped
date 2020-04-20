@@ -58,7 +58,7 @@ class Sim:
         # Additional runtime params
         self.tipThresh = 0.2
         self.yawThresh = 0.2
-        self.velRewardScale = 1.2
+        self.velRewardScale = 1.0
 
     def reset(self):
         pybullet.resetSimulation()
