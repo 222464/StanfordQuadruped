@@ -3,7 +3,7 @@ import pybullet_data
 
 
 class HardwareInterface:
-    def __init__(self, model, joint_indices, kp=0.25, kv=0.5, max_torque=10):
+    def __init__(self, model, joint_indices, kp=0.25, kv=0.5, max_torque=1):
         self.model = model
         self.joint_indices = joint_indices
         self.kp = kp

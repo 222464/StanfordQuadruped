@@ -40,7 +40,7 @@ def main(use_imu=False):
         # Parse the udp joystick commands and then update the robot controller's parameters
         command = Command()
 
-        training_interface.set_reward(speed)
+        training_interface.set_reward(speed * 10.0)
 
         # Go forward at max speed
         command.horizontal_velocity = np.array([1.0, 0.0]) * speed

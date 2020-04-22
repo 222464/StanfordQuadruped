@@ -42,7 +42,7 @@ class TrainingInterface:
 
         lds = []
 
-        for i in range(4):
+        for i in range(3):
             ld = pyogmaneo.LayerDesc()
             ld.hiddenSize = Int3(4, 4, 16)
 
@@ -98,7 +98,7 @@ class TrainingInterface:
         self.average_error = self.average_error_decay * self.average_error + (1.0 - self.average_error_decay) * error
 
         # Update agent
-        self.h.step(self.cs, [ angle_SDR, 6 * [ IMU_RESOLUTION // 2 ] ], True, self.reward) # Constant positive reward encourages prediction of angles
+        self.h.step(self.cs, [ angle_SDR, [ np.random.randint(0, IMU_RESOLUTION) for i in range(6) ] ], True, self.reward, True) # Constant positive reward encourages prediction of angles
 
         self.num_samples += 1
 

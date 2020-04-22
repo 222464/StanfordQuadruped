@@ -70,6 +70,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     #h = pyogmaneo.Hierarchy(cs, input_sizes, input_types, lds)
 
     h = pyogmaneo.Hierarchy("pupper.ohr")
+    #h = pyogmaneo.Hierarchy("pupper_rltrained.ohr")
 
     angles = 12 * [ 0.0 ]
 
@@ -114,7 +115,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
   
             actions = list(h.getPredictionCs(0))
 
-            #actions = mutate(np.array(actions), 0.02, h.getInputSize(0).z).tolist()
+            #actions = mutate(np.array(actions), 0.01, h.getInputSize(0).z).tolist()
 
             control_reward_accum = 0.0
             control_reward_accum_steps = 0
@@ -149,7 +150,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
         control_reward_accum += reward
         control_reward_accum_steps += 1
 
-        if steps % 10000 == 9999:
+        if steps % 50000 == 49999:
             print("Saving...")
             h.save("pupper_rltrained.ohr")
 
