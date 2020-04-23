@@ -37,7 +37,7 @@ def main(use_imu=False):
     smooth_factor = 0.01
     smooth_scale = 4.0
     max_speed = 0.5
-    max_yaw_rate = 4.0
+    max_yaw_rate = 1.0
 
     while True:
         # Parse the udp joystick commands and then update the robot controller's parameters
