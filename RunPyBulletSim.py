@@ -113,7 +113,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
     octaves = 3
     smooth_chain = octaves * [ np.array([ 0.0, 0.0, 0.0 ]) ]
-    smooth_factor = 0.01
+    smooth_factor = 0.005
     smooth_scale = 4.0
     max_speed = 0.5
     max_yaw_rate = 1.0

@@ -85,7 +85,7 @@ class Sim:
         upVec = rotateVec(posOrient[1], [ 0.0, 0.0, 1.0 ])
         forwardVec = rotateVec(posOrient[1], [ 1.0, 0.0, 0.0 ])
 
-        if upVec[2] < self.tipThresh or forwardVec[0] < self.yawThresh:
+        if upVec[2] < self.tipThresh:# or forwardVec[0] < self.yawThresh:
             reward = -10.0
 
             self.reset()
