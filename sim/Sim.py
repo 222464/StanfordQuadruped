@@ -57,7 +57,7 @@ class Sim:
 
         # Additional runtime params
         self.tipThresh = 0.2
-        self.yawThresh = 0.1
+        self.yawThresh = 0.4
         self.velRewardScale = 1.0
 
     def reset(self):
@@ -66,7 +66,7 @@ class Sim:
 
         self.model = ( pybullet.loadURDF("sim/floor.urdf"), pybullet.loadURDF("sim/pupper_moment.urdf") )#pybullet.loadMJCF("sim/pupper_pybullet_out.xml")
 
-        pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.33 ], [ 0, 0, 0, 1 ])
+        pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.25 ], [ 0, 0, 0, 1 ])
 
     def step(self):
         # Follow camera

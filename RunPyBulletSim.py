@@ -12,11 +12,13 @@ from common.State import State
 from sim.HardwareInterface import HardwareInterface
 from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
+from common.State import State, BehaviorState
 
 import pyogmaneo
 from pyogmaneo import Int3
 
 ANGLE_RESOLUTION = 16
+COMMAND_RESOLUTION = 16
 IMU_RESOLUTION = 16
 IMU_SQUASH_SCALE = 1.0
 
@@ -33,8 +35,6 @@ def mutate(x, rate, oneHotSize):
 
 def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock_frame_rate=True):
     # Create config
-    config = Configuration()
-    config.z_clearance = 0.05
     sim = Sim()
     hardware_interface = HardwareInterface(sim.model, sim.joint_indices)
 
@@ -74,12 +74,6 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
     angles = 12 * [ 0.0 ]
 
-    print("Summary of gait parameters:")
-    print("overlap time: ", config.overlap_time)
-    print("swing time: ", config.swing_time)
-    print("z clearance: ", config.z_clearance)
-    print("x shift: ", config.x_shift)
-
     # Sim seconds per sim step
     sim_steps_per_sim_second = 240
     sim_dt = 1.0 / sim_steps_per_sim_second
@@ -96,6 +90,28 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
     actions = list(h.getPredictionCs(0))
 
+    # Create config
+    config = Configuration()
+    config.z_clearance = 0.05
+
+    # Create controller and user input handles
+    controller = Controller(
+        config,
+        four_legs_inverse_kinematics,
+    )
+    state = State()
+    state.behavior_state = BehaviorState.TROT
+
+    octaves = 3
+    smooth_chain = octaves * [ np.array([ 0.0, 0.0, 0.0 ]) ]
+    smooth_factor = 0.01
+    smooth_scale = 4.0
+    max_speed = 0.5
+    max_yaw_rate = 4.0
+
+    offsets = np.array([ -0.12295051, 0.12295051, -0.12295051, 0.12295051, 0.77062617, 0.77062617,
+        0.77062617, 0.77062617, -0.845151, -0.845151, -0.845151, -0.845151 ])
+
     while True:
         start_step_time = time.time()
 
@@ -109,9 +125,22 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             imu_SDR = []
 
             for i in range(len(imu_vals)):
-                imu_SDR.append(int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
+                imu_SDR.append(IMU_RESOLUTION // 2)#int((np.tanh(imu_vals[i] * IMU_SQUASH_SCALE) * 0.5 + 0.5) * (IMU_RESOLUTION - 1) + 0.5))
 
-            h.step(cs, [ actions, imu_SDR ], True, control_reward_accum / max(1, control_reward_accum_steps))
+            # Smoothed noise
+            smooth_chain[0] += smooth_factor * (np.random.randn(3) * smooth_scale - smooth_chain[0])
+
+            for i in range(1, octaves):
+                smooth_chain[i] += smooth_factor * (smooth_chain[i - 1] - smooth_chain[i])
+
+            smoothed_result = np.minimum(1.0, np.maximum(-1.0, smooth_chain[-1]))
+
+            direction = smoothed_result
+            #direction = np.array([ 1.0, 0.0, 0.0 ])
+
+            command_SDR = [ int((direction[i] * 0.5 + 0.5) * (COMMAND_RESOLUTION - 1) + 0.5) for i in range(3) ]
+            
+            h.step(cs, [ actions, command_SDR, imu_SDR ], False, control_reward_accum / max(1, control_reward_accum_steps))
   
             actions = list(h.getPredictionCs(0))
 
@@ -126,11 +155,11 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
 
             for segment_index in range(3):
                 for leg_index in range(4):
-                    target_angle = (actions[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.5 * np.pi)
+                    target_angle = (actions[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.25 * np.pi) + offsets[motor_index]
                     
-                    delta = 0.3 * (target_angle - angles[motor_index])
+                    delta = 0.5 * (target_angle - angles[motor_index])
 
-                    max_delta = 0.04
+                    max_delta = 0.05
 
                     if abs(delta) > max_delta:
                         delta = max_delta if delta > 0.0 else -max_delta
@@ -140,6 +169,22 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
                     joint_angles[segment_index, leg_index] = angles[motor_index]
 
                     motor_index += 1
+
+            command = Command()
+
+            # Go forward at max speed
+            command.horizontal_velocity = direction[0 : 2] * max_speed
+            command.yaw_rate = direction[2] * max_yaw_rate
+
+            quat_orientation = (
+                np.array([1, 0, 0, 0])
+            )
+            state.quat_orientation = quat_orientation
+
+            # Step the controller forward by dt
+            controller.run(state, command)
+            
+            #joint_angles = copy(state.joint_angles)
 
             # Update the pwm widths going to the servos
             hardware_interface.set_actuator_postions(joint_angles)
@@ -164,4 +209,4 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             time.sleep(max(0, sim_dt - step_elapsed))
 
 if __name__ == "__main__":
-    main(default_velocity=np.array([0.5, 0]), lock_frame_rate=False)
+    main(default_velocity=np.array([0.5, 0]), lock_frame_rate=True)

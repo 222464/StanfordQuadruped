@@ -33,6 +33,7 @@ def mutate(x, rate, oneHotSize):
     return z
 
 ANGLE_RESOLUTION = 16
+COMMAND_RESOLUTION = 16
 IMU_RESOLUTION = 16
 
 class TrainingInterface:
@@ -44,11 +45,11 @@ class TrainingInterface:
 
         for i in range(3):
             ld = pyogmaneo.LayerDesc()
-            ld.hiddenSize = Int3(4, 4, 16)
+            ld.hiddenSize = Int3(5, 5, 16)
 
-            ld.ffRadius = 4
-            ld.pRadius = 4
-            ld.aRadius = 4
+            ld.ffRadius = 5
+            ld.pRadius = 5
+            ld.aRadius = 5
 
             ld.ticksPerUpdate = 2
             ld.temporalHorizon = 4
@@ -58,31 +59,38 @@ class TrainingInterface:
         input_sizes = [ Int3(4, 3, ANGLE_RESOLUTION) ]
         input_types = [ pyogmaneo.inputTypeAction ]
 
+        input_sizes.append(Int3(3, 1, COMMAND_RESOLUTION))
+        input_types.append(pyogmaneo.inputTypeNone)
+
         input_sizes.append(Int3(3, 2, IMU_RESOLUTION))
         input_types.append(pyogmaneo.inputTypeNone)
 
         self.h = pyogmaneo.Hierarchy(self.cs, input_sizes, input_types, lds)
 
         self.reward = 1.0
+        self.direction = np.array([ 0.0, 0.0, 0.0 ])
 
         self.average_error = 0.0
         self.average_error_decay = 0.999
 
         self.num_samples = 0
 
+        self.offsets = np.array([ -0.12295051, 0.12295051, -0.12295051, 0.12295051, 0.77062617, 0.77062617,
+            0.77062617, 0.77062617, -0.845151, -0.845151, -0.845151, -0.845151 ])
+
     def set_reward(self, reward):
         self.reward = reward
 
+    def set_direction(self, direction):
+        self.direction = direction
+
     def set_actuator_positions(self, joint_angles):
-        joint_angles_raveled = joint_angles.ravel()
+        joint_angles_offset = joint_angles.ravel() - self.offsets
 
-        # Mutate
-        #joint_angles_mut = joint_angles_raveled + np.random.randn(joint_angles_raveled.shape[0]) * 0.1
-
-        #noise_error = np.sum(np.square(joint_angles_raveled - joint_angles_mut))
+        angle_SDR = [ int((min(1.0, max(-1.0, joint_angles_offset[i] / (0.25 * np.pi))) * 0.5 + 0.5) * (ANGLE_RESOLUTION - 1) + 0.5) for i in range(len(joint_angles_offset)) ]
         
-        angle_SDR = [ int((min(1.0, max(-1.0, joint_angles_raveled[i] / (0.5 * np.pi))) * 0.5 + 0.5) * (ANGLE_RESOLUTION - 1) + 0.5) for i in range(len(joint_angles_raveled)) ]
-
+        command_SDR = [ int((self.direction[i] * 0.5 + 0.5) * (COMMAND_RESOLUTION - 1) + 0.5) for i in range(3) ]
+        
         # Compare predictions
         error = 0.0
 
@@ -98,7 +106,7 @@ class TrainingInterface:
         self.average_error = self.average_error_decay * self.average_error + (1.0 - self.average_error_decay) * error
 
         # Update agent
-        self.h.step(self.cs, [ angle_SDR, [ np.random.randint(0, IMU_RESOLUTION) for i in range(6) ] ], True, self.reward, True) # Constant positive reward encourages prediction of angles
+        self.h.step(self.cs, [ angle_SDR, command_SDR, 6 * [ IMU_RESOLUTION // 2 ] ], True, self.reward, True) # Constant positive reward encourages prediction of angles
 
         self.num_samples += 1
 
