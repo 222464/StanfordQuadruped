@@ -13,6 +13,7 @@ from sim.HardwareInterface import HardwareInterface
 from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 from common.State import State, BehaviorState
+from pupper.TrainingInterface import ANGLE_RESOLUTION, COMMAND_RESOLUTION, IMU_RESOLUTION
 
 import pyogmaneo
 from pyogmaneo import Int3
@@ -20,9 +21,6 @@ from pyogmaneo import Int3
 import evdev
 from evdev import list_devices, ecodes
 
-ANGLE_RESOLUTION = 16
-COMMAND_RESOLUTION = 16
-IMU_RESOLUTION = 16
 IMU_SQUASH_SCALE = 1.0
 
 ls = [ 0.0, 0.0 ]
@@ -114,9 +112,9 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
     octaves = 3
     smooth_chain = octaves * [ np.array([ 0.0, 0.0, 0.0 ]) ]
     smooth_factor = 0.005
-    smooth_scale = 4.0
+    smooth_scale = 9.0
     max_speed = 0.5
-    max_yaw_rate = 1.0
+    max_yaw_rate = 1.5
 
     offsets = np.array([ -0.12295051, 0.12295051, -0.12295051, 0.12295051, 0.77062617, 0.77062617,
         0.77062617, 0.77062617, -0.845151, -0.845151, -0.845151, -0.845151 ])
@@ -160,9 +158,11 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
             smoothed_result = np.minimum(1.0, np.maximum(-1.0, smooth_chain[-1]))
 
             #direction = smoothed_result
-            #direction = np.array([ 1.0, 0.0, 0.0 ])
+            #direction = np.array([ 0.75, 0.0, 0.0 ])
             direction = np.array([ -ls[1], -ls[0], -rs[0] ])
-            
+
+            sim.set_direction(np.array([ direction[0] * max_speed, direction[1] * max_speed, direction[2] * max_yaw_rate ]))
+
             command_SDR = [ int((direction[i] * 0.5 + 0.5) * (COMMAND_RESOLUTION - 1) + 0.5) for i in range(3) ]
             
             h.step(cs, [ actions, command_SDR, imu_SDR ], False, control_reward_accum / max(1, control_reward_accum_steps))
@@ -182,7 +182,7 @@ def main(use_imu=False, default_velocity=np.zeros(2), default_yaw_rate=0.0, lock
                 for leg_index in range(4):
                     target_angle = (actions[motor_index] / float(ANGLE_RESOLUTION - 1) * 2.0 - 1.0) * (0.25 * np.pi) + offsets[motor_index]
                     
-                    delta = 0.5 * (target_angle - angles[motor_index])
+                    delta = 0.3 * (target_angle - angles[motor_index])
 
                     max_delta = 0.05
 

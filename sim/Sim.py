@@ -1,6 +1,8 @@
 import pybullet
 import pybullet_data
 
+import numpy as np
+
 # Helpers
 def cross(v0, v1):
     return [ v0[1] * v1[2] - v0[2] * v1[1],
@@ -58,7 +60,8 @@ class Sim:
         # Additional runtime params
         self.tipThresh = 0.2
         self.yawThresh = 0.4
-        self.velRewardScale = 1.0
+
+        self.direction = np.array([ 0.0, 0.0, 0.0 ])
 
     def reset(self):
         pybullet.resetSimulation()
@@ -67,6 +70,9 @@ class Sim:
         self.model = ( pybullet.loadURDF("sim/floor.urdf"), pybullet.loadURDF("sim/pupper_moment.urdf") )#pybullet.loadMJCF("sim/pupper_pybullet_out.xml")
 
         pybullet.resetBasePositionAndOrientation(self.model[1], [ 0, 0, 0.25 ], [ 0, 0, 0, 1 ])
+
+    def set_direction(self, direction):
+        self.direction = direction
 
     def step(self):
         # Follow camera
@@ -78,12 +84,23 @@ class Sim:
 
         vels = pybullet.getBaseVelocity(self.model[1])
 
-        reward = self.velRewardScale * vels[0][0]
-
         posOrient = pybullet.getBasePositionAndOrientation(self.model[1])
 
         upVec = rotateVec(posOrient[1], [ 0.0, 0.0, 1.0 ])
         forwardVec = rotateVec(posOrient[1], [ 1.0, 0.0, 0.0 ])
+        localVel = rotateVec(rotationInverse(posOrient[1]), vels[0])
+
+        yawVel = vels[1][2]
+
+        actualDirection = np.array([ localVel[0], localVel[1], yawVel ])
+        #print(actualDirection)
+        velDif = self.direction - actualDirection
+
+        velErr = np.sum(np.square(velDif))
+
+        #print(velErr)
+        
+        reward = 1.0 - velErr * 0.1
 
         if upVec[2] < self.tipThresh:# or forwardVec[0] < self.yawThresh:
             reward = -10.0

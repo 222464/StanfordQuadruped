@@ -33,7 +33,7 @@ def mutate(x, rate, oneHotSize):
     return z
 
 ANGLE_RESOLUTION = 16
-COMMAND_RESOLUTION = 16
+COMMAND_RESOLUTION = 9
 IMU_RESOLUTION = 16
 
 class TrainingInterface:
@@ -43,7 +43,7 @@ class TrainingInterface:
 
         lds = []
 
-        for i in range(3):
+        for i in range(2):
             ld = pyogmaneo.LayerDesc()
             ld.hiddenSize = Int3(5, 5, 16)
 
