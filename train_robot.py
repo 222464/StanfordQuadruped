@@ -31,17 +31,34 @@ def main(use_imu=False):
     print("z clearance: ", config.z_clearance)
     print("x shift: ", config.x_shift)
 
-    t = 0.0
+    amplitude = 0.0
+    amplitude_vel = 0.0
+    angle = 0.0
+    angle_vel = 0.0
+    yaw = 0.0
+    yaw_vel = 0.0
 
     while True:
         # Parse the udp joystick commands and then update the robot controller's parameters
         command = Command()
 
-        # Go forward at max speed
-        command.horizontal_velocity = np.array([np.cos(t), np.sin(t)]) * 0.3
+        amplitude_accel = np.random.randn() * 3.0
+        amplitude_vel += amplitude_accel * config.dt - 0.2 * amplitude_vel * config.dt
+        amplitude += amplitude_vel * config.dt
 
-        t += config.dt * 0.4
-        t = t % (2.0 * np.pi)
+        angle_accel = np.random.randn() * 3.0
+        angle_vel += angle_accel * config.dt - 0.2 * angle_vel * config.dt
+        angle += angle_vel * config.dt
+
+        yaw_accel = np.random.randn() * 3.0
+        yaw_vel += yaw_accel * config.dt - 0.2 * yaw_vel * config.dt
+        yaw += yaw_vel * config.dt
+
+        #print(str(amplitude) + " " + str(angle) + " " + str(yaw))
+
+        # Go forward at max speed
+        command.horizontal_velocity = np.array([ np.cos(angle) * np.sin(amplitude), np.sin(angle) * np.sin(amplitude) ]) * 0.5
+        command.yaw_rate = np.sin(yaw) * 0.5
 
         quat_orientation = (
             np.array([1, 0, 0, 0])
@@ -50,6 +67,8 @@ def main(use_imu=False):
 
         # Step the controller forward by dt
         controller.run(state, command)
+
+        training_interface.set_direction(np.array([ command.horizontal_velocity[0], command.horizontal_velocity[1], command.yaw_rate ]))
 
         # Update the agent with the angles
         training_interface.set_actuator_positions(state.joint_angles)
